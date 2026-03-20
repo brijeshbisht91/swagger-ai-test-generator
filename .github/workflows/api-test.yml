@@ -1,16 +1,39 @@
-name : API Automation Tests
+name: API Automation Tests
 
-on : 
-    push : 
-        branches : [ "main" ]
-    pull_request:
-        branches: [ "main" ]
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-    run-tests: 
-        run-on : ubuntu-latest
-        steps : 
+  run-tests:
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven
 
+      - name: Run API Tests
+        run: |
+          cd java-tests
+          mvn clean test
+
+      - name: Upload Allure Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: java-tests/target/allure-results
