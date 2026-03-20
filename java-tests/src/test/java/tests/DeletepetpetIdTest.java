@@ -1,6 +1,9 @@
 package tests;
 
 import base.BaseTest;
+import io.qameta.allure.Description;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import io.restassured.response.Response;
 import org.testng.annotations.Test;
 
@@ -10,6 +13,8 @@ import static org.hamcrest.Matchers.equalTo;
 public class DeletepetpetIdTest extends BaseTest {
 
     @Test
+    @Description("Verify testDeletePet with valid data")
+    @Severity(SeverityLevel.CRITICAL)
     public void testDeletePet() {
         long id = (System.currentTimeMillis() % 1_000_000_000L) + 2;
         String body = String.format(

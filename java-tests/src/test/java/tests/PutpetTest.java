@@ -3,13 +3,17 @@ package tests;
 import base.BaseTest;
 import io.restassured.http.ContentType;
 import org.testng.annotations.Test;
-
+import io.qameta.allure.Description;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
 public class PutpetTest extends BaseTest {
 
     @Test
+    @Description("Verify testPetUpdate with valid data")
+    @Severity(SeverityLevel.CRITICAL)
     public void testPetUpdate() {
         long id = System.currentTimeMillis() % 1_000_000_000L + 1;
         String create = String.format(

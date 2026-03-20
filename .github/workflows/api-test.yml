@@ -1,0 +1,16 @@
+name : API Automation Tests
+
+on : 
+    push : 
+        branches : [ "main" ]
+    pull_request:
+        branches: [ "main" ]
+
+jobs:
+    run-tests: 
+        run-on : ubuntu-latest
+        steps : 
+
+
+
+
