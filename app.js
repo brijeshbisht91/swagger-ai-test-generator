@@ -1,7 +1,11 @@
 const fs = require('fs');
 const axios = require('axios');
 
-const OLLAMA_URL = 'http://localhost:11434/api/generate';
+const OLLAMA_BASE = (process.env.OLLAMA_HOST || 'http://localhost:11434').replace(
+  /\/$/,
+  ''
+);
+const OLLAMA_URL = `${OLLAMA_BASE}/api/generate`;
 const MODEL = 'llama3.2:3b';
 
 const TARGET_ENDPOINTS = [
