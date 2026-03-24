@@ -8,7 +8,7 @@ services:
       - ollama
     environment:
       - OLLAMA_HOST=http://ollama:11434
-    command: node fetchSwagger.js   # <-- use your actual file
+    command: node app.js   # <-- use your actual file
 
   ollama:
     image: ollama/ollama

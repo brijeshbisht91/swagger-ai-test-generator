@@ -1,0 +1,46 @@
+name: Swagger AI with Docker Compose
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  run-compose:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Start Ollama
+        run: docker-compose up --build -d ollama
+
+      - name: Wait for Ollama and pull model
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:11434 >/dev/null && break
+            sleep 2
+          done
+          docker exec ollama ollama pull llama3.2:3b
+
+      - name: Build and start app
+        run: docker-compose up --build -d swagger-app
+
+      - name: Wait for app (Ollama generation)
+        run: sleep 30
+
+      - name: Show App Logs
+        run: docker logs swagger-diff-app
+
+      - name: Stop Containers
+        run: docker-compose down
