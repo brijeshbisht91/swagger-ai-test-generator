@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  swagger-app:
+    build: .
+    container_name: swagger-diff-app
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    command: node fetchSwagger.js   # <-- use your actual file
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:

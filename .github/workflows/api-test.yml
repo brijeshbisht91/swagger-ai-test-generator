@@ -10,10 +10,19 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
 
+    services:
+      ollama:
+        image: ollama/ollama
+        ports:
+          - 11434:11434
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ---------------------------
+      # Java Setup
+      # ---------------------------
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -26,14 +35,64 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-maven
 
+      # ---------------------------
+      # Node Setup (for Swagger AI)
+      # ---------------------------
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Node dependencies
+        run: npm install
+
+      # ---------------------------
+      # Wait for Ollama
+      # ---------------------------
+      - name: Wait for Ollama
+        run: |
+          echo "Waiting for Ollama..."
+          sleep 15
+          curl http://localhost:11434
+
+      # ---------------------------
+      # Pull Model
+      # ---------------------------
+      - name: Pull Ollama Model
+        run: docker exec ${{ job.services.ollama.id }} ollama pull llama3
+
+      # ---------------------------
+      # Run Swagger AI Script
+      # ---------------------------
+      - name: Run Swagger AI
+        run: node fetchSwagger.js
+        env:
+          OLLAMA_HOST: http://localhost:11434
+
+      # ---------------------------
+      # Run API Tests
+      # ---------------------------
       - name: Run API Tests
         run: |
           cd java-tests
           mvn clean test
 
+      # ---------------------------
+      # Upload Allure Results
+      # ---------------------------
       - name: Upload Allure Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
           path: java-tests/target/allure-results
+
+      # ---------------------------
+      # (Optional) Upload AI Output
+      # ---------------------------
+      - name: Upload AI Output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-testcases
+          path: ai-testcases.txt
