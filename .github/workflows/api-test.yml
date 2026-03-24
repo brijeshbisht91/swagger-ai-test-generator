@@ -65,7 +65,7 @@ jobs:
       # Run Swagger AI Script
       # ---------------------------
       - name: Run Swagger AI
-        run: node fetchSwagger.js
+        run: node app.js
         env:
           OLLAMA_HOST: http://localhost:11434
 
