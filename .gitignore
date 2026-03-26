@@ -1,7 +1,14 @@
 # Dependencies
 node_modules/
 
-# Node / npm
+# 
+
+# Compiled / build
+*.class
+*.jar
+*.war
+*.ear
+*.narNode / npm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -13,13 +20,6 @@ pom.xml.tag
 pom.xml.releaseBackup
 release.properties
 dependency-reduced-pom.xml
-
-# Compiled / build
-*.class
-*.jar
-*.war
-*.ear
-*.nar
 hs_err_pid*
 replay_pid*
 
