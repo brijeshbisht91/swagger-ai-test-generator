@@ -62,6 +62,24 @@ jobs:
         run: docker exec ${{ job.services.ollama.id }} ollama pull llama3.2:3b
 
       # ---------------------------
+      # Security scan (spec + live probes + Ollama triage)
+      # ---------------------------
+      - name: Security scan
+        run: npm run security:scan
+        env:
+          OLLAMA_HOST: http://localhost:11434
+          API_BASE_URL: https://petstore.swagger.io/v2
+
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: |
+            swagger-engine/security-report.json
+            swagger-engine/security-report.md
+
+      # ---------------------------
       # Run Swagger AI Script
       # ---------------------------
       - name: Run Swagger AI

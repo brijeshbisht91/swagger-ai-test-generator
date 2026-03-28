@@ -1,5 +1,12 @@
 [
   {
+    "endpoint": "/pet/{petId}/uploadImage#post",
+    "type": "DELETED",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pet/{petId}/uploadImage.post",
+    "operationId": "uploadFile"
+  },
+  {
     "endpoint": "/pettie#post",
     "type": "DELETED",
     "category": "ENDPOINT_CHANGE",
@@ -12,6 +19,13 @@
     "category": "ENDPOINT_CHANGE",
     "fullPath": "/pettie.put",
     "operationId": "updatePet"
+  },
+  {
+    "endpoint": "/pet/{petId}/CHNAGESMADE#post",
+    "type": "NEW",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pet/{petId}/CHNAGESMADE.post",
+    "operationId": "uploadFile"
   },
   {
     "endpoint": "/pet#post",

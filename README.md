@@ -76,6 +76,8 @@ All engine artifacts live under **`swagger-engine/`** so the repo root stays cle
 SWAGGER_ENGINE_DIR=/path/to/engine node app.js
 ```
 
+If **`swagger-changes.json` looks empty or never updates**, check the terminal output from `npm run swagger:diff`: it prints the **absolute paths** where files were written. Common causes: **`SWAGGER_ENGINE_DIR`** is set (outputs go to that folder, not the copy you have open in the editor), the command was run from a **different clone**, or the IDE buffer did not reload from disk (reopen the file or **Reload from Disk**). When `swagger-prev.json` and `swagger-latest.json` **paths are identical**, `swagger-changes.json` is valid JSON **`[]`** (no API changes), not a blank file.
+
 ### Docker / CI (conceptual)
 
 - **Docker Compose**: `ollama` service + `swagger-app` running `node app.js` with `OLLAMA_HOST=http://ollama:11434`.
@@ -95,6 +97,55 @@ npm run swagger:fetch    # refresh spec snapshots
 npm run swagger:diff     # regenerate diff + analyzed changes
 node app.js              # apply changes via Ollama → Java tests
 cd java-tests && mvn test
+```
+
+## Security scanning
+
+Runs an **OWASP API Security Top 10 (2023)**–oriented review: **Ollama** analyzes a **truncated OpenAPI JSON** excerpt from `swagger-engine/swagger-latest.json`, plus optional **live HTTP probe** results (`API_BASE_URL`). There is **no** separate static rule engine and **no** OWASP ZAP integration—only LLM-structured output from your spec and probes.
+
+**Advisory only:** this is not a penetration test, not OWASP ZAP, and not a certification. See [OWASP API Security](https://owasp.org/www-project-api-security/).
+
+```bash
+# Requires Ollama and a spec at swagger-engine/swagger-latest.json
+export API_BASE_URL=https://petstore.swagger.io/v2   # optional; adds probe facts for the model
+npm run security:scan
+```
+
+Outputs (always written when the script finishes, even if Ollama fails):
+
+- `swagger-engine/security-report.json` — includes `findings` (flattened OWASP-tagged rows), `llm` raw analysis, `liveProbe`
+- `swagger-engine/security-report.md` — same content as Markdown (open this path after each run)
+
+If `SWAGGER_ENGINE_DIR` is set, both files are written under **that directory** instead—check the console lines `Wrote Markdown: /absolute/path/...`.
+
+### Environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `API_BASE_URL` | Base URL for live probes (no trailing slash). If unset, analysis is **spec-only** (still sent to Ollama). |
+| `OLLAMA_HOST` | Ollama base URL (default `http://localhost:11434`). |
+| `OLLAMA_MODEL` | Model tag (default `llama3.2:3b`). |
+| `OLLAMA_SECURITY_JSON_FORMAT` | Default `0`: plain text JSON from the model (avoids echoing the OpenAPI doc when `format: json` is on). Set to `1` only if your model reliably returns the analysis schema with `format: json`. |
+| `SECURITY_PROBE_ALLOW_MUTATING` | Default `0`: only **GET** and **HEAD**. Set to `1` to also allow **OPTIONS** and **DELETE** (still no POST bodies). |
+| `SECURITY_PROBE_MAX_ENDPOINTS` | Cap live probes (default `25`). |
+| `SECURITY_PROBE_TIMEOUT_MS` | Per-request timeout (default `10000`). |
+| `SECURITY_PROBE_AUTH_HEADER` | Value for the `Authorization` header on probes (e.g. `Bearer <token>`). |
+
+### Flow (security)
+
+```mermaid
+flowchart LR
+  Spec[swagger_latest.json]
+  Probe[liveProbe.js]
+  Ollama[securityOllama.js OWASP Top10]
+  Json[security_report.json]
+  Md[security_report.md]
+  Spec --> Scan[securityScan.js]
+  Probe --> Scan
+  Scan --> Ollama
+  Ollama --> Scan
+  Scan --> Json
+  Scan --> Md
 ```
 
 ## Notes

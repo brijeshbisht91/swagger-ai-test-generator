@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-03-28T06:38:45.981Z",
+  "specPath": "swagger-engine/swagger-latest.json",
+  "baseUrl": "https://petstore.swagger.io/v2",
+  "methodology": "OWASP API Security Top 10 (2023) structured review by Ollama over OpenAPI excerpt and optional live probes. Advisory only; not OWASP ZAP/DAST and not a penetration test.",
+  "liveProbe": {
+    "enabled": true,
+    "probes": [
+      {
+        "path": "/pet/{petId}",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/pet/1",
+        "status": 200,
+        "durationMs": 1311,
+        "responseHeaders": {},
+        "bodySnippet": "{\"id\":1,\"category\":{\"id\":200,\"name\":\"Cat\"},\"name\":\"Bunny\",\"photoUrls\":[\"https:ex.com\",\"https://dog.com\"],\"tags\":[{\"id\":300,\"name\":\"Red\"},{\"id\":400,\"name\":\"Red\"}],\"status\":\"available\"}"
+      },
+      {
+        "path": "/pet/findByStatus",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/pet/findByStatus?status=x",
+        "status": 200,
+        "durationMs": 1328,
+        "responseHeaders": {},
+        "bodySnippet": "[]"
+      },
+      {
+        "path": "/pet/findByTags",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/pet/findByTags?tags=x",
+        "status": 200,
+        "durationMs": 1004,
+        "responseHeaders": {},
+        "bodySnippet": "[]"
+      },
+      {
+        "path": "/store/inventory",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/store/inventory",
+        "status": 200,
+        "durationMs": 977,
+        "responseHeaders": {},
+        "bodySnippet": "{\"sold\":282,\"SOLD\":1,\"Sold\":1,\"string\":223,\"avaliable\":1,\"Busy\":1,\"pending\":50,\"available\":421,\"avalible\":2,\"Not Available\":1,\"Available\":2,\"statusy\":2}"
+      },
+      {
+        "path": "/store/order/{orderId}",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/store/order/1",
+        "status": 404,
+        "durationMs": 992,
+        "responseHeaders": {},
+        "bodySnippet": "{\"code\":1,\"type\":\"error\",\"message\":\"Order not found\"}"
+      },
+      {
+        "path": "/user/{username}",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/user/user1",
+        "status": 200,
+        "durationMs": 991,
+        "responseHeaders": {},
+        "bodySnippet": "{\"id\":9223372036854762000,\"username\":\"user1\",\"firstName\":\"demo\",\"lastName\":\"User\",\"email\":\"demo@example.com\",\"password\":\"Password1!\",\"phone\":\"1234567890\",\"userStatus\":1}"
+      },
+      {
+        "path": "/user/login",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/user/login?username=user1&password=x",
+        "status": 200,
+        "durationMs": 970,
+        "responseHeaders": {},
+        "bodySnippet": "{\"code\":200,\"type\":\"unknown\",\"message\":\"logged in user session:1774679744915\"}"
+      },
+      {
+        "path": "/user/logout",
+        "method": "get",
+        "url": "https://petstore.swagger.io/v2/user/logout",
+        "status": 200,
+        "durationMs": 995,
+        "responseHeaders": {},
+        "bodySnippet": "{\"code\":200,\"type\":\"unknown\",\"message\":\"ok\"}"
+      }
+    ],
+    "skipped": [],
+    "notice": null
+  },
+  "llm": {
+    "ok": false,
+    "error": "timeout of 180000ms exceeded",
+    "raw": ""
+  },
+  "findings": []
+}

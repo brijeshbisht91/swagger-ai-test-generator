@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "swagger:fetch": "node swagger-engine/fetchSwagger.js",
-    "swagger:diff": "node swagger-engine/diffSwagger.js"
+    "swagger:diff": "node swagger-engine/diffSwagger.js",
+    "security:scan": "node swagger-engine/securityScan.js"
   },
   "keywords": [],
   "author": "",
