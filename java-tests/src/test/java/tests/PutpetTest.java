@@ -12,9 +12,9 @@ import static org.hamcrest.Matchers.equalTo;
 public class PutpetTest extends BaseTest {
 
     @Test
-    @Description("Verify testPetUpdate with valid data")
+    @Description("Verify updatePet with valid data")
     @Severity(SeverityLevel.CRITICAL)
-    public void testPetUpdate() {
+    public void testUpdatePet() {
         long id = System.currentTimeMillis() % 1_000_000_000L + 1;
         String create = String.format(
                 "{\"id\":%d,\"name\":\"Seed\",\"photoUrls\":[\"http://example.com/pet.jpg\"],\"status\":\"pending\"}",

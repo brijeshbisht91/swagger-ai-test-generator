@@ -1,15 +1,10 @@
-# Use Node base image
-From node: 18 
+FROM node:18
 
-
-# Use working directory 
 WORKDIR /app
 
-# Copy files 
 COPY package.json ./
-Run npm install
+RUN npm install
 
-COPY ..
+COPY . .
 
-#Run Script 
-CMD["node", "fetchSwagger.js"]
+CMD ["node", "swagger-engine/fetchSwagger.js"]

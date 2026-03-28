@@ -1,0 +1,30 @@
+[
+  {
+    "endpoint": "/pettie#post",
+    "type": "DELETED",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pettie.post",
+    "operationId": "addPet"
+  },
+  {
+    "endpoint": "/pettie#put",
+    "type": "DELETED",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pettie.put",
+    "operationId": "updatePet"
+  },
+  {
+    "endpoint": "/pet#post",
+    "type": "NEW",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pet.post",
+    "operationId": "addPet"
+  },
+  {
+    "endpoint": "/pet#put",
+    "type": "NEW",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pet.put",
+    "operationId": "updatePet"
+  }
+]

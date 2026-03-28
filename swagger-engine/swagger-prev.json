@@ -42,7 +42,7 @@
     "http"
   ],
   "paths": {
-    "/pet/{petId}/uploadUserImage": {
+    "/pet/{petId}/uploadImage": {
       "post": {
         "tags": [
           "pet"
@@ -98,7 +98,7 @@
         ]
       }
     },
-    "/pet": {
+    "/pettie": {
       "post": {
         "tags": [
           "pet"

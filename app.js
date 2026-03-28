@@ -1,5 +1,6 @@
 const fs = require('fs');
 const axios = require('axios');
+const { paths: swaggerPaths } = require('./swagger-engine/config');
 
 const OLLAMA_BASE = (process.env.OLLAMA_HOST || 'http://localhost:11434').replace(
   /\/$/,
@@ -9,11 +10,13 @@ const OLLAMA_URL = `${OLLAMA_BASE}/api/generate`;
 const MODEL = 'llama3.2:3b';
 
 function getChanges() {
-  return JSON.parse(fs.readFileSync('swagger-changes.json'));
+  const raw = fs.readFileSync(swaggerPaths.changes, 'utf8').trim();
+  if (!raw) return [];
+  return JSON.parse(raw);
 }
 
 function getSelectedEndpoints() {
-  const swagger = JSON.parse(fs.readFileSync('swagger.json'));
+  const swagger = JSON.parse(fs.readFileSync(swaggerPaths.spec, 'utf8'));
   const paths = swagger.paths;
 
   const selected = [];
@@ -31,21 +34,46 @@ function getSelectedEndpoints() {
   return selected;
 }
 
-function createPrompt(change, existingCode = "") {
+function javaClassNameFromTestFile(filePath) {
+  const seg = filePath.split(/[/\\]/).pop() || '';
+  return seg.replace(/\.java$/i, '');
+}
+
+/** LLMs often rename classes from operationId (e.g. updatePet → UpdatePetTest); file must stay consistent. */
+function enforcePublicClassName(javaSource, className) {
+  if (!className) return javaSource;
+  return javaSource.replace(
+    /public\s+class\s+[A-Za-z0-9_]+/,
+    `public class ${className}`
+  );
+}
+
+function createPrompt(change, existingCode = '', outputJavaPath = '') {
+  const renameHint = change.renameFromPath
+    ? `Path migration: the API path was corrected from "${change.renameFromPath}" to "${change.endpoint.split('#')[0]}". Update .post()/.put()/.get() paths and any string URLs to use the new path; keep the same class name, package, and overall test structure unless a rename is explicitly required.\n\n`
+    : '';
+
+  const requiredClass = outputJavaPath ? javaClassNameFromTestFile(outputJavaPath) : '';
+  const classRule = requiredClass
+    ? `REQUIRED: The output file is \`${requiredClass}.java\`. The one public class MUST be named exactly \`${requiredClass}\`. Do not rename it to match operationId, summary, or endpoint text (e.g. never use UpdatePetTest for this file).\n\n`
+    : '';
+
   return `
 You are a senior QA Automation Engineer.
 
-Swagger Change:
+${classRule}${renameHint}Swagger Change:
 Endpoint: ${change.endpoint}
 Type: ${change.type}
 Category: ${change.category}
+${change.operationId ? `operationId: ${change.operationId} (do not use this to name the Java class)\n` : ''}
 
-${existingCode ? `Existing Test:\n${existingCode}` : ""}
+${existingCode ? `Existing Test:\n${existingCode}` : ''}
 
 Task:
-- If NEW → create full test
+- If NEW (and no rename hint) → create full test for this method only
 - If UPDATED → modify only affected parts
 - If DELETED → suggest removal
+- If rename hint is present → minimally edit the existing test to use the new path; do not add unrelated methods from other operations
 
 Use:
 - TestNG
@@ -126,22 +154,28 @@ async function run() {
 
     let existingCode = "";
 
-    // For endpoint rename style diffs (DELETED + NEW), reuse old file when possible.
+    // Pair NEW with DELETED same HTTP method (path rename in spec): reuse old file if present, else same target file + rename hint.
     let reusedDeletedFile = false;
+    let renameFromPath;
     if (change.category === "ENDPOINT_CHANGE" && change.type === "NEW") {
       const current = parseEndpoint(change.endpoint);
       const matchIdx = pendingDeletedEndpointChanges.findIndex((d) => {
         const candidate = parseEndpoint(d.endpoint);
-        if (candidate.method !== current.method) return false;
-        const candidateFile = getJavaFileNameFromChange(d);
-        return fs.existsSync(candidateFile);
+        return candidate.method === current.method;
       });
 
       if (matchIdx !== -1) {
         const deletedMatch = pendingDeletedEndpointChanges.splice(matchIdx, 1)[0];
-        fileName = getJavaFileNameFromChange(deletedMatch);
-        reusedDeletedFile = true;
-        console.log(`👉 Reusing existing test file: ${fileName}`);
+        const candidateFile = getJavaFileNameFromChange(deletedMatch);
+        const oldPath = parseEndpoint(deletedMatch.endpoint).path;
+        if (fs.existsSync(candidateFile)) {
+          fileName = candidateFile;
+          reusedDeletedFile = true;
+          console.log(`👉 Reusing existing test file: ${fileName}`);
+        } else {
+          renameFromPath = oldPath;
+          console.log(`👉 Rename ${oldPath} → ${current.path} (${current.method}); updating ${fileName}`);
+        }
       }
     }
 
@@ -172,9 +206,15 @@ async function run() {
         continue;
     }
 
-    const prompt = createPrompt(change, existingCode);
+    const prompt = createPrompt(
+      renameFromPath ? { ...change, renameFromPath } : change,
+      existingCode,
+      fileName
+    );
     const raw = await callOllama(prompt);
-    const result = stripMarkdownCodeFence(raw);
+    const stripped = stripMarkdownCodeFence(raw);
+    const requiredClass = javaClassNameFromTestFile(fileName);
+    const result = enforcePublicClassName(stripped, requiredClass);
 
     fs.writeFileSync(fileName, result);
 
