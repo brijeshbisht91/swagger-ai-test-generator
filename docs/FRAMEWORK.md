@@ -33,6 +33,9 @@ Do **not** hardcode these URLs or API keys in new generated code.
 ## Test class rules
 
 - **Package:** `tests`.
+- **TestNG only:** use `@Test` on each test method. **Never** use `public static void main`.
+- **Services are static:** `PetService` / `UserService` are `final` with a **private** constructor — call **`PetService.createPet(...)`** etc. **Never** `new PetService()` or `new UserService()`.
+- **Models:** `Pet` uses Lombok `@Data` + constructors — **no** `Pet.builder()` unless `@Builder` is explicitly added to the class.
 - **Imports:** `services.*`, `utils.ResponseValidator`, `models.*` as needed; avoid unused imports.
 - **BaseTest:** Do **not** default to `extends base.BaseTest` for new tests that use `RequestSpecBuilderUtil` + services (that pattern sets only global `baseURI` and fights explicit specs). Use **service + spec** only. Legacy tests may still extend `BaseTest`; prefer the layered style for new code.
 - **Class name:** Must match the target filename exactly (e.g. file `PostpetTest.java` → `public class PostpetTest`). Never rename the class from `operationId` if it conflicts with the filename.
@@ -43,7 +46,7 @@ The pipeline maps each Swagger change to `java-tests/src/test/java/tests/<Derive
 
 - Prefer **thin** tests: build payload with `TestDataBuilder` / models, call the appropriate **Service** method, then validate.
 - If `PetService` (or another service) already centralizes that verb+path, **call it** from the test instead of inlining `given()...post("/pet")`.
-- If no service method exists yet for the new operation, **add the method to the service** in the same change (describe in comments if the tool only outputs one file — then at minimum use `getPetstoreRequestSpec()` or `getRequestSpec()` in the test with `given().spec(...)`).
+- If no service method exists yet for the new operation, **`node app.js` may run a second Ollama pass** to update `PetService.java` (when `OLLAMA_SYNC_SERVICE` is not `0`), then generate the test. You should still write the test calling the **correct static method name** (e.g. `PetService.uploadPetImage(...)`).
 
 ## Petstore `Pet` model (reference)
 
