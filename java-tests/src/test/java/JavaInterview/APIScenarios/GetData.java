@@ -1,4 +1,4 @@
-package tests;
+package JavaInterview.APIScenarios;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;

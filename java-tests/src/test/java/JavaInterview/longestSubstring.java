@@ -9,7 +9,7 @@ public class longestSubstring {
     public static void main(String[] args) {
         
        
-        String s = "addbbczsddf";
+        String s = "addbbcbbsfdf";
 
         Set<Character> set = new HashSet<>();
 
