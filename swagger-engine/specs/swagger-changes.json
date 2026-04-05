@@ -1,0 +1,16 @@
+[
+  {
+    "endpoint": "/pet/{petId}/CHNAGESMADE#post",
+    "type": "DELETED",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pet/{petId}/CHNAGESMADE.post",
+    "operationId": "uploadFile"
+  },
+  {
+    "endpoint": "/pet/{petId}/uploadImage#post",
+    "type": "NEW",
+    "category": "ENDPOINT_CHANGE",
+    "fullPath": "/pet/{petId}/uploadImage.post",
+    "operationId": "uploadFile"
+  }
+]

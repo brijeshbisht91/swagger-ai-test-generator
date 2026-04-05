@@ -76,8 +76,8 @@ jobs:
         with:
           name: security-report
           path: |
-            swagger-engine/security-report.json
-            swagger-engine/security-report.md
+            swagger-engine/reports/security-report.json
+            swagger-engine/reports/security-report.md
 
       # ---------------------------
       # Run Swagger AI Script

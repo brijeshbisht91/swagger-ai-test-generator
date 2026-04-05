@@ -98,7 +98,7 @@
         ]
       }
     },
-    "/pettie": {
+    "/pet": {
       "post": {
         "tags": [
           "pet"

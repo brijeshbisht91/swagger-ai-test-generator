@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 const { paths: swaggerPaths } = require('./swagger-engine/config');
 
@@ -7,7 +8,31 @@ const OLLAMA_BASE = (process.env.OLLAMA_HOST || 'http://localhost:11434').replac
   ''
 );
 const OLLAMA_URL = `${OLLAMA_BASE}/api/generate`;
-const MODEL = 'llama3.2:3b';
+const MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b';
+
+const FRAMEWORK_DOC_PATH = path.join(__dirname, 'docs', 'FRAMEWORK.md');
+
+function loadFrameworkInstructions() {
+  try {
+    return fs.readFileSync(FRAMEWORK_DOC_PATH, 'utf8').trim();
+  } catch (e) {
+    console.warn(
+      `⚠️  Could not read ${FRAMEWORK_DOC_PATH}; using minimal inline framework hint.`
+    );
+    return [
+      'Use TestNG + Rest Assured.',
+      'Tests in package tests; call services (PetService, UserService) instead of raw given() without spec.',
+      'Use RequestSpecBuilderUtil.getPetstoreRequestSpec() or getRequestSpec(); config from config.properties.',
+      'Use ResponseValidator for HTTP status; POJOs + TestDataBuilder for bodies.',
+      'Do not extend BaseTest unless legacy; prefer service + explicit RequestSpecification.',
+    ].join('\n');
+  }
+}
+
+const FRAMEWORK_INSTRUCTIONS = loadFrameworkInstructions();
+
+/** Reserved for future targeted generation; empty = unused. */
+const TARGET_ENDPOINTS = [];
 
 function getChanges() {
   const raw = fs.readFileSync(swaggerPaths.changes, 'utf8').trim();
@@ -50,7 +75,7 @@ function enforcePublicClassName(javaSource, className) {
 
 function createPrompt(change, existingCode = '', outputJavaPath = '') {
   const renameHint = change.renameFromPath
-    ? `Path migration: the API path was corrected from "${change.renameFromPath}" to "${change.endpoint.split('#')[0]}". Update .post()/.put()/.get() paths and any string URLs to use the new path; keep the same class name, package, and overall test structure unless a rename is explicitly required.\n\n`
+    ? `Path migration: the API path was corrected from "${change.renameFromPath}" to "${change.endpoint.split('#')[0]}". Update service methods or .post()/.put()/.get() paths to use the new path; keep PetService/UserService encapsulation when possible. Keep the same public class name as the target file.\n\n`
     : '';
 
   const requiredClass = outputJavaPath ? javaClassNameFromTestFile(outputJavaPath) : '';
@@ -61,6 +86,12 @@ function createPrompt(change, existingCode = '', outputJavaPath = '') {
   return `
 You are a senior QA Automation Engineer.
 
+Follow the repository Java test framework below exactly. Prefer extending services (PetService, UserService) or calling them from tests; do not hardcode base URLs or API keys.
+
+--- FRAMEWORK (mandatory) ---
+${FRAMEWORK_INSTRUCTIONS}
+--- END FRAMEWORK ---
+
 ${classRule}${renameHint}Swagger Change:
 Endpoint: ${change.endpoint}
 Type: ${change.type}
@@ -70,17 +101,12 @@ ${change.operationId ? `operationId: ${change.operationId} (do not use this to n
 ${existingCode ? `Existing Test:\n${existingCode}` : ''}
 
 Task:
-- If NEW (and no rename hint) → create full test for this method only
-- If UPDATED → modify only affected parts
+- If NEW (and no rename hint) → create full test for this method only (package tests; use services + ResponseValidator + models as per FRAMEWORK).
+- If UPDATED → modify only affected parts; keep framework layering.
 - If DELETED → suggest removal
-- If rename hint is present → minimally edit the existing test to use the new path; do not add unrelated methods from other operations
+- If rename hint is present → minimally edit paths or service methods; do not add unrelated operations
 
-Use:
-- TestNG
-- Rest Assured
-- Extend base.BaseTest
-
-Return ONLY Java code.
+Return ONLY Java source code (one file). No markdown fences unless wrapping a single java block is unavoidable—we strip fences downstream.
 `;
 }
 
@@ -118,7 +144,10 @@ async function callOllama(prompt) {
   const response = await axios.post(OLLAMA_URL, {
     model: MODEL,
     prompt: prompt,
-    stream: false
+    stream: false,
+    options: {
+      temperature: Number(process.env.OLLAMA_TEMPERATURE) || 0.2
+    }
   });
 
   return response.data.response;
@@ -127,7 +156,7 @@ async function callOllama(prompt) {
 async function run() {
   const changes = getChanges();
   const pendingDeletedEndpointChanges = changes.filter(
-    (c) => c.category === "ENDPOINT_CHANGE" && c.type === "DELETED"
+    (c) => c.category === 'ENDPOINT_CHANGE' && c.type === 'DELETED'
   );
 
   for (const change of changes) {
@@ -136,28 +165,28 @@ async function run() {
     let fileName = getJavaFileNameFromChange(change);
 
     // Hold endpoint deletions until we know whether a NEW endpoint should reuse them.
-    if (change.category === "ENDPOINT_CHANGE" && change.type === "DELETED") {
-      console.log("👉 Holding deleted endpoint for possible reuse");
+    if (change.category === 'ENDPOINT_CHANGE' && change.type === 'DELETED') {
+      console.log('👉 Holding deleted endpoint for possible reuse');
       continue;
     }
 
     // Other deleted APIs should not generate a new test.
-    if (change.type === "DELETED") {
+    if (change.type === 'DELETED') {
       if (fs.existsSync(fileName)) {
         fs.unlinkSync(fileName);
         console.log(`🗑️ Removed test for deleted endpoint: ${fileName}\n`);
       } else {
-        console.log("👉 Endpoint deleted; no existing test file to remove");
+        console.log('👉 Endpoint deleted; no existing test file to remove');
       }
       continue;
     }
 
-    let existingCode = "";
+    let existingCode = '';
 
     // Pair NEW with DELETED same HTTP method (path rename in spec): reuse old file if present, else same target file + rename hint.
     let reusedDeletedFile = false;
     let renameFromPath;
-    if (change.category === "ENDPOINT_CHANGE" && change.type === "NEW") {
+    if (change.category === 'ENDPOINT_CHANGE' && change.type === 'NEW') {
       const current = parseEndpoint(change.endpoint);
       const matchIdx = pendingDeletedEndpointChanges.findIndex((d) => {
         const candidate = parseEndpoint(d.endpoint);
@@ -174,7 +203,9 @@ async function run() {
           console.log(`👉 Reusing existing test file: ${fileName}`);
         } else {
           renameFromPath = oldPath;
-          console.log(`👉 Rename ${oldPath} → ${current.path} (${current.method}); updating ${fileName}`);
+          console.log(
+            `👉 Rename ${oldPath} → ${current.path} (${current.method}); updating ${fileName}`
+          );
         }
       }
     }
@@ -184,25 +215,24 @@ async function run() {
     }
 
     switch (change.category) {
-
-      case "ENDPOINT_CHANGE":
-      case "URL_CHANGE":
+      case 'ENDPOINT_CHANGE':
+      case 'URL_CHANGE':
         if (existingCode || reusedDeletedFile) {
-          console.log("👉 Endpoint change → update existing test");
+          console.log('👉 Endpoint change → update existing test');
         } else {
-          console.log("👉 New API → generate test");
+          console.log('👉 New API → generate test');
         }
         break;
 
-      case "BODY_CHANGE":
-      case "QUERY_PARAM_CHANGE":
-      case "PATH_PARAM_CHANGE":
-      case "RESPONSE_CHANGE":
-        console.log("👉 Update existing test");
+      case 'BODY_CHANGE':
+      case 'QUERY_PARAM_CHANGE':
+      case 'PATH_PARAM_CHANGE':
+      case 'RESPONSE_CHANGE':
+        console.log('👉 Update existing test');
         break;
 
       default:
-        console.log("👉 Skipping minor change");
+        console.log('👉 Skipping minor change');
         continue;
     }
 
@@ -230,7 +260,7 @@ async function run() {
     }
   }
 
-  console.log("AI-based test update completed 🚀");
+  console.log('AI-based test update completed 🚀');
 }
 
 run();

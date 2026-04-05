@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { paths, getOllamaConfig } = require('./config');
+const { paths, getOllamaConfig, REPORTS_DIR } = require('../config');
 const { runLiveProbes } = require('./liveProbe');
 const { runSecurityOllama } = require('./securityOllama');
 
@@ -159,13 +159,14 @@ function buildMarkdown(report) {
 }
 
 function writeReportBundle(report) {
+  fs.mkdirSync(REPORTS_DIR, { recursive: true });
   const jsonPath = path.resolve(paths.securityReportJson);
   const mdPath = path.resolve(paths.securityReportMd);
   let md;
   try {
     md = buildMarkdown(report);
   } catch (e) {
-    md = `# API security report\n\n**Markdown generation failed:** ${e.message}\n\nOpen \`security-report.json\` in the same folder for details.\n`;
+    md = `# API security report\n\n**Markdown generation failed:** ${e.message}\n\nOpen \`reports/security-report.json\` for details.\n`;
   }
   fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2), 'utf8');
   fs.writeFileSync(mdPath, md, 'utf8');
