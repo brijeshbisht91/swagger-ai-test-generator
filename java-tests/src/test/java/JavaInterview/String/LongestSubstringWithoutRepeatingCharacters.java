@@ -1,12 +1,17 @@
 package JavaInterview.String;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
+/**
+ * Longest substring without repeating characters (all distinct).
+ * <p>
+ * Technique: brute force — for each start index, extend the substring until a repeat;
+ * {@code temp.contains} checks uniqueness.
+ * <p>
+ * Time: O(n³) in the worst case (roughly n² pairs × O(length) {@code contains} / concat).
+ * Space: O(n) for the list and temporary strings.
+ */
 public class LongestSubstringWithoutRepeatingCharacters {
 
     public static void main(String[] args) {

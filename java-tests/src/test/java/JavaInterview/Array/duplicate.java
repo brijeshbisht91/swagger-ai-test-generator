@@ -1,5 +1,8 @@
 package JavaInterview.Array;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class duplicate {
 
     public static void main(String[] args) {
