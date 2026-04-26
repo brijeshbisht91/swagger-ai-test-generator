@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
 # Node / npm
 npm-debug.log*
 yarn-debug.log*
@@ -45,3 +50,6 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Last OpenAPI snapshot for local diff (optional: remove this line to commit baselines)
+swagger.previous.json

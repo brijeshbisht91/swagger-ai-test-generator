@@ -36,15 +36,16 @@ jobs:
           key: ${{ runner.os }}-maven
 
       # ---------------------------
-      # Node Setup (for Swagger AI)
+      # Python (Swagger AI / LangGraph)
       # ---------------------------
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: 18
+          python-version: "3.12"
+          cache: "pip"
 
-      - name: Install Node dependencies
-        run: npm install
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
 
       # ---------------------------
       # Wait for Ollama
@@ -64,8 +65,9 @@ jobs:
       # ---------------------------
       # Run Swagger AI Script
       # ---------------------------
+      # --force-all: CI should always regenerate every target test (no reliance on swagger.previous.json)
       - name: Run Swagger AI
-        run: node app.js
+        run: python swagger_ai_graph.py --force-all
         env:
           OLLAMA_HOST: http://localhost:11434
 
@@ -90,9 +92,9 @@ jobs:
       # ---------------------------
       # (Optional) Upload AI Output
       # ---------------------------
-      - name: Upload AI Output
+      - name: Upload generated Java tests
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ai-testcases
-          path: ai-testcases.txt
+          name: generated-java-tests
+          path: java-tests/src/test/java/tests

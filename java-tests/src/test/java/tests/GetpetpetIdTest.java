@@ -7,19 +7,18 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 
-public class PostpetTest extends BaseTest {
+public class GetpetpetIdTest extends BaseTest {
 
     @Test
-    public void testPostPet() {
+    public void testGetPetById() {
         given()
                 .baseUri("https://petstore.swagger.io/v2")
-                .basePath("/pet")
-                .contentType(ContentType.JSON)
-                .body(
-                        "{\"id\":0,\"name\":\"dog\",\"photoUrls\":[\"https://example.com/a\"],\"status\":\"available\"}")
+                .basePath("/pet/{petId}")
+                .pathParam("petId", 1)
+                .accept(ContentType.JSON)
                 .when()
-                .post()
+                .get()
                 .then()
-                .statusCode(anyOf(is(200), is(405)));
+                .statusCode(anyOf(is(200), is(404)));
     }
 }
