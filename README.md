@@ -235,10 +235,16 @@ Workflow: `.github/workflows/api-test.yml`
 
 ---
 
+## Further documentation
+
+- **[AI testing scenarios](docs/AI_TESTING_SCENARIOS.md)** — hallucination, RAG, query, model output, and embedding test cases; validation checklist and CI alignment.
+
 ## Repository layout (reference)
 
 ```text
 swagger-AI/
+├── docs/
+│   └── AI_TESTING_SCENARIOS.md  # AI/RAG/embedding testing scenarios
 ├── swagger_ai_graph.py    # CLI entrypoint (calls graph package)
 ├── graph/
 │   ├── builder.py         # Wires LangGraph nodes (START → load → … → END)
